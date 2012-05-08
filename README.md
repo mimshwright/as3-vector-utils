@@ -4,6 +4,8 @@ A collection of useful utilities for working with Vectors (the geometric type, n
 
 Chiefly, the `VMath` class contains many mathematical operations for manipulating vectors.
 
+The package structure mirrors that of [AS3-Utils](https://github.com/as3/as3-utils), which is another great general purpose library.
+
 Please be aware, I am not a mathematician or physicist and there may be errors in the code. If you see anything that is incorrect or that could be iproved, please submit a pull request!
 
 ### Note on using `Point` objects: 
