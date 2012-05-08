@@ -1,4 +1,4 @@
-package
+package utils.geom
 {
 	import flash.display.DisplayObject;
 	import flash.geom.Matrix;
@@ -6,9 +6,45 @@ package
 	import flash.geom.Rectangle;
 	
 	/**
-	 * Static class that has some of the vector math functions for behaviors.
+	 * <p>
+	 * A class full of static functions for performing mathematical operations on vectors.
+	 * These functions are kept in a static class as opposed to being methods of a Vector2D 
+	 * class. It takes a little more typing but it keeps the size of the vectors small and 
+	 * the performance as fast as possible. 
+	 * </p>
+	 * <p>
+	 * <strong>Note on using Point objects:</strong> 
+	 * Vectors are not, strictly speaking, Points. But due to the intricate ways the 
+	 * Flash Player is optimized, the Point object can perform many of these functions 
+	 * faster than a custom-built Vector2D object. In AS3, Points are faster, functionally 
+	 * interchangeable with vectors, and in many cases more convenient when working
+	 * with the Flash Player API (e.g. <code>globalToLocal()</code>). 
+	 * That's why I chose to use them.      
+	 * </p>
+	 * 
+	 * <p>
+	 * <strong>Note about '$' functions:</strong>
+	 * Some functions have two versions, one that affects the vector argument directly and 
+	 * one that returns a new vector. The ones that affect the vector argument are denoted
+	 * by a '$'. 
+	 * </p>
+	 * 
+	 * <p>
+	 * Thanks to FlashGameDojo (http://flashgamedojo.com/wiki/index.php?title=VMath) 
+	 * and Paul Firth (http://www.wildbunny.co.uk/blog/vector-maths-a-primer-for-games-programmers/)
+	 * </p>
 	 * 
 	 * @author Mims H. Wright beginning with code from FlashGameDojo
+	 * @playerversion 9.0
+	 * 
+	 * @example This exampe shows the difference between add() and $add()
+	 * <listing version="3.0">
+	 *	var v1:Point = new Point(5, 5);
+	 *	var v2:Point = new Point(10, 0);
+	 * 
+	 *	var sum:Point = VMath.add(v1, v2); // sum = (15,5). v1 and v2 are unaffected.
+	 *	VMath.$add(v1,v2); // v1 = (15, 5), v2 is unaffected.  
+	 * </listing> 
 	 */
 	public class VMath {
 		
@@ -35,11 +71,24 @@ package
 		 * A copy of the Point object's normalize() function put here for consistency.
 		 */ 
 		static public function normalize(v:Point, l:Number = 1.0):void { v.normalize(l); }
+
 		
 		/** Alternate name for getLength() */
 		static public var getMagnitude:Function = getLength;
 		/** Alternate name for setLength() */
 		static public var setMagnitude:Function = setLength;
+
+		/** Returns the square of the magnitude of the vector. */
+		static public function getMagnitudeSquared(v:Point):Number { return Math.pow(v.length, 2); }
+		
+		/**
+		 * Returns a copy of the vector as a unit vector. 
+		 */ 
+		static public function getUnit(v:Point):Point { 
+			v = v.clone();
+			v.normalize(1);
+			return v; 
+		}
 		
 		/**
 		 * Returns the angle of the vector in radians.
@@ -58,10 +107,20 @@ package
 		}
 		
 		/**
+		 * Returns a vector which is the original vector by the specified angle in radians. Different from setAngle()
+		 * in that it adds to the previous angle. 
+		 */
+		static public function rotate(v:Point, angle:Number):Point {
+			v = v.clone();
+			setAngle(v, getAngle(v) + angle);
+			return v;
+		}
+		
+		/**
 		 * Rotates the vector by the specified angle in radians. Different from setAngle()
 		 * in that it adds to the previous angle. 
 		 */
-		static public function rotate(v:Point, angle:Number):void {
+		static public function $rotate(v:Point, angle:Number):void {
 			setAngle(v, getAngle(v) + angle);
 		}
 		
@@ -96,19 +155,15 @@ package
 		static public function pointBetween(p1:Point, p2:Point, percentageBetween:Number = 0.5):Point {
 			return Point.interpolate(p1, p2, percentageBetween);
 		}
+		static public var interpolate:Function = pointBetween;
 		
-		/**
-		 * sets the x and y of the display object to that of the vector.
-		 */
-		static public function setPosition(displayObject:DisplayObject, vector:Point):void {
-			displayObject.x = vector.x;
-			displayObject.y = vector.y;
-		}
+		
+		///// VECTOR ARITHMETIC functions
 		
 		/**
 		 * Adds vector2 to vector1 and returns the result without altering either vector.
-		 * @param	v1	The Vector2D in question
-		 * @param	v2	The Vector2D to be added to v1
+		 * @param	v1	The original vector
+		 * @param	v2	The vector to be added to v1
 		 * @param	vn	Additional vectors to add.
 		 */
 		static public function add(v1:Point, v2:Point, ... vn):Point {
@@ -122,7 +177,7 @@ package
 		
 		/**
 		 * Adds vector2 to vector1 and modifies the value of v1.
-		 * @param	v1	The vector in question
+		 * @param	v1	The original vector
 		 * @param	v2	The vector to be added to v1
 		 * @param	vn	Additional vectors to add.
 		 */
@@ -199,29 +254,6 @@ package
 		}
 		
 		/**
-		 * Gets the dot product of two vectors.
-		 * 
-		 * @return the dot product of v and the instance
-		 * */
-		static public function dot( v1:Point, v2:Point ):Number
-		{
-			return v1.x * v2.x + v1.y * v2.y;
-		}
-		
-		
-		/**
-		 * Gets the cross product of two vectors
-		 * 
-		 * @param v1 Vector to evaluate cross product with
-		 * @param v2 Vector to evaluate cross product with
-		 * @return cross product of v1 and v2
-		 * */
-		static public function cross( v1:Point, v2:Point ):Number
-		{
-			return v1.x * v2.y - v1.y * v2.x;
-		}
-		
-		/**
 		 * Returns a new vector that is pointing the opposite direction from <code>v</code>.
 		 * 
 		 * @param v A vector to reverse.
@@ -244,7 +276,46 @@ package
 		}
 
 		
+		/**
+		 * Gets the dot product of two vectors.
+		 * 
+		 * @return the dot product of v and the instance
+		 * */
+		static public function dot( v1:Point, v2:Point ):Number
+		{
+			return v1.x * v2.x + v1.y * v2.y;
+		}
+		
+		
+		/**
+		 * Gets the cross product of two vectors
+		 * 
+		 * @param v1 Vector to evaluate cross product with
+		 * @param v2 Vector to evaluate cross product with
+		 * @return cross product of v1 and v2
+		 * */
+		static public function cross( v1:Point, v2:Point ):Number
+		{
+			return v1.x * v2.y - v1.y * v2.x;
+		}
+		
+		
+		/**
+		 * Projects v1 onto v2.
+		 */
+		public static function project(v1:Point, v2:Point):Point {
+			var v2Unit:Point = getUnit(v2);
+			var length:Number = dot(v1, v2Unit);
+			var projection:Point = multiply(v2Unit, length);
+			return projection;
+		}
+		
+
 		///// COMPARISSON functions that test aspects of two vectors.
+		
+		/**
+		 * Returns true if all of the vector arguments have the same x and y components.
+		 */
 		static public function isEqual(v1:Point, v2:Point, ... vn):Boolean {
 			vn.push(v2);
 			var i:int = 0, l:int = vn.length;
@@ -268,6 +339,9 @@ package
 		
 		/** Returns true if v2 points in the opposite direction of v1. */
 		static public function isOpposite (v1:Point, v2:Point):Boolean { return dot(v1, v2) == -1; }
+		
+		/** Returns true if the length of the vector is 1. */
+		static public function isUnit (v:Point):Boolean { return v.length == 1.0 }
 		
 		/**
 		 * Determines if a given vector is to the right or left of this vector.
