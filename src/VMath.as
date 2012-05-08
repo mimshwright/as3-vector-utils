@@ -1,14 +1,45 @@
 package
 {
 	import flash.display.DisplayObject;
+	import flash.geom.Matrix;
 	import flash.geom.Point;
+	import flash.geom.Rectangle;
 	
 	/**
 	 * Static class that has some of the vector math functions for behaviors.
 	 * 
-	 * @author Base code from FlashGameDojo
+	 * @author Mims H. Wright beginning with code from FlashGameDojo
 	 */
 	public class VMath {
+		
+		/** 
+		 * Returns the length of the vector (distance from 0,0 to v).
+		 * 
+		 * @param v The vector to get the length from.
+		 * @return Number The length of the vector.
+		 * 
+		 * @see flash.geom.Point#length
+		 */
+		static public function getLength(v:Point):Number { return v.length; }
+		
+		/**
+		 * Sets the length of the vector to a new scalar.
+		 * Note: if the vector is already length zero, the result will be zero. 
+		 * 
+		 * @param v The vector to set the length of. 
+		 * @param l The new length of the vector. 
+		 */
+		static public function setLength(v:Point, l:Number):void { v.normalize(l); }
+		
+		/**
+		 * A copy of the Point object's normalize() function put here for consistency.
+		 */ 
+		static public function normalize(v:Point, l:Number = 1.0):void { v.normalize(l); }
+		
+		/** Alternate name for getLength() */
+		static public var getMagnitude:Function = getLength;
+		/** Alternate name for setLength() */
+		static public var setMagnitude:Function = setLength;
 		
 		/**
 		 * Returns the angle of the vector in radians.
@@ -27,6 +58,14 @@ package
 		}
 		
 		/**
+		 * Rotates the vector by the specified angle in radians. Different from setAngle()
+		 * in that it adds to the previous angle. 
+		 */
+		static public function rotate(v:Point, angle:Number):void {
+			setAngle(v, getAngle(v) + angle);
+		}
+		
+		/**
 		 * Calculates the angle between two vectors.
 		 * @param v1 The first vector instance.
 		 * @param v2 The second vector instance.
@@ -37,19 +76,10 @@ package
 			return Math.acos(dot(v1, v2) / (v1.length * v2.length));
 		}
 		
-		static public function setLength(v:Point, l:Number):void {
-			var a:Number = getAngle(v);
-			v.x = Math.cos(a) * l;
-			v.y = Math.sin(a) * l;
-		}
 		
-		static public function getLength(v:Point):Number {
-			return v.length;
-		}
-		
-		static public var getMagnitude:Function = getLength;
-		static public var setMagnitude:Function = setLength;
-		
+		/**
+		 * @see flash.geom.Point#distance()
+		 */
 		static public function distance(v1:Point, v2:Point):Number {
 			return Point.distance(v1, v2);
 		}
@@ -70,7 +100,7 @@ package
 		/**
 		 * sets the x and y of the display object to that of the vector.
 		 */
-		static public function apply(displayObject:DisplayObject, vector:Point):void {
+		static public function setPosition(displayObject:DisplayObject, vector:Point):void {
 			displayObject.x = vector.x;
 			displayObject.y = vector.y;
 		}
@@ -92,8 +122,8 @@ package
 		
 		/**
 		 * Adds vector2 to vector1 and modifies the value of v1.
-		 * @param	v1	The Vector2D in question
-		 * @param	v2	The Vector2D to be added to v1
+		 * @param	v1	The vector in question
+		 * @param	v2	The vector to be added to v1
 		 * @param	vn	Additional vectors to add.
 		 */
 		static public function $add(v1:Point, v2:Point, ... vn):Point { 
@@ -173,36 +203,22 @@ package
 		 * 
 		 * @return the dot product of v and the instance
 		 * */
-		static public function dot( v1:Point, v2:Point ) : Number
+		static public function dot( v1:Point, v2:Point ):Number
 		{
 			return v1.x * v2.x + v1.y * v2.y;
 		}
 		
 		
 		/**
-		 * Gets the cross product of the Vector and instance
+		 * Gets the cross product of two vectors
 		 * 
-		 * @param v Vector to evaluate cross product with
-		 * @return cross product of v and instance
+		 * @param v1 Vector to evaluate cross product with
+		 * @param v2 Vector to evaluate cross product with
+		 * @return cross product of v1 and v2
 		 * */
-		static public function cross( v1:Point, v2:Point ) : Number
+		static public function cross( v1:Point, v2:Point ):Number
 		{
 			return v1.x * v2.y - v1.y * v2.x;
-		}
-		
-		static public function crossScalar(v:Point, s:Number):Point {
-			v = v.clone();
-			var temp:Number = v.x;
-			v.x = -s * v.y;
-			v.y = s * temp;
-			return v;
-		}
-		
-		
-		static public function getUnit(v:Point):Point {
-			v = v.clone();
-			v.normalize(1);
-			return v;
 		}
 		
 		/**
@@ -226,27 +242,9 @@ package
 			v.x *= -1;
 			v.y *= -1;
 		}
-		
-		/**
-		 * Determines if a given vector is to the right or left of this vector.
-		 * @return int If to the left, returns -1. If to the right, +1.
-		 */
-		static public function sign(v1:Point, v2:Point):int
-		{
-			return dot(getPerpindicular(v1), (v2)) < 0 ? -1 : 1;
-		}
 
-		/**
-		 * Ensures the length of the vector is no longer than the given value.
-		 * @param	v	A Vector2D instance to truncate.
-		 * @param	max	The maximum value this vector should be. If length is larger than max, it will be truncated to this value.
-		 */
-		static public function truncate(v:Point, max:Number):Point {
-			v = v.clone();
-			setLength(v,Math.min(max, v.length)); 
-			return v;
-		}
 		
+		///// COMPARISSON functions that test aspects of two vectors.
 		static public function isEqual(v1:Point, v2:Point, ... vn):Boolean {
 			vn.push(v2);
 			var i:int = 0, l:int = vn.length;
@@ -259,20 +257,37 @@ package
 			return true;
 		}
 		
-		static public function isPerpindicular (v1:Point, v2:Point):Boolean {
-			return dot(v1, v2) == 0;
-		}
-		static public function isParallel (v1:Point, v2:Point):Boolean {
-			return dot(v1, v2) == 1;
-		}
-		static public function isColinear (v1:Point, v2:Point):Boolean {
-			return dot(v1, v2) == -1;
-		}
-		static public var isOpposite:Function = isColinear;
+		/** Returns true if the angle between v1 and v2 is 90° or 270°. */
+		static public function isPerpindicular (v1:Point, v2:Point):Boolean { return dot(v1, v2) == 0; }
 		
-		static public function getZeroVector():Point {
-			return new Point(0, 0);
+		/** Returns true if the angle between v1 and v2 is 0° or 180°. */
+		static public function isParallel (v1:Point, v2:Point):Boolean { 
+			var d:Number = dot(v1, v2);
+			return d == 1 || d == -1; 
 		}
+		
+		/** Returns true if v2 points in the opposite direction of v1. */
+		static public function isOpposite (v1:Point, v2:Point):Boolean { return dot(v1, v2) == -1; }
+		
+		/**
+		 * Determines if a given vector is to the right or left of this vector.
+		 * @return int If to the left, returns -1. If to the right, +1.
+		 */
+		static public function sign(v1:Point, v2:Point):int
+		{
+			return dot(getPerpindicular(v1), (v2)) < 0 ? -1 : 1;
+		}
+		
+		///// CONSTRUCTOR functions that return commonly used Vectors.
+		
+		/** Returns a new vector with components (0,0). */ 
+		static public function getZeroVector():Point { return new Point(0, 0); }
+		
+		/** Returns a unit vector "i-hat" codirectional with the x axis. */
+		static public function getUnitI():Point { return new Point(1, 0); }
+		
+		/** Returns a unit vector "j-hat" codirectional with the y axis. */
+		static public function getUnitJ():Point { return new Point(0, 1); }
 		
 		/**
 		 * @return a new Vector that is perpindicular to the vector provided.
@@ -285,5 +300,14 @@ package
 			v.y = temp;
 			return v;
 		}
+		
+		
+		//// CONVERSIONS to other data types.
+		
+		/** Returns an array with two elements based on the vector. */
+		static public function toArray(v:Point):Array { return [v.x, v.y]; }
+		
+		/** Returns a transformation matrix with x and y translation based on the vector. */
+		static public function toMatrix(v:Point):Matrix { return new Matrix(1, 0, 0, 1, v.x, v.y); }
 	} 
 }
